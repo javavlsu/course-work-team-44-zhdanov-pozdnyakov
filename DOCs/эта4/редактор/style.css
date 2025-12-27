@@ -233,7 +233,7 @@
   padding: var(--size-space-300) var(--size-space-400) var(--size-space-300)
     var(--size-space-400);
   position: absolute;
-  top: 200px;
+  top: 190px;
   left: 980px;
   background-color: var(--color-background-default-default);
   border-radius: var(--size-radius-full);
@@ -329,7 +329,7 @@
 
 .screen .text-wrapper-3 {
   position: absolute;
-  top: 156px;
+  top: 135px;
   left: 988px;
   font-family: var(--heading-font-family);
   font-weight: var(--heading-font-weight);
