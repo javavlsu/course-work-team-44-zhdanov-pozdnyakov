@@ -1,6 +1,12 @@
 import React from 'react';
 
+const MAX_LABEL_LENGTH = 20;
+
 export default function ComponentCard({ component, action, onAction, actionLabel, disabled }) {
+  const displayLabel =
+  actionLabel && actionLabel.length > MAX_LABEL_LENGTH
+    ? actionLabel.slice(0, MAX_LABEL_LENGTH - 1) + '…'
+    : actionLabel;
   return (
     <article className="card card--component">
       <div className="card__header">
@@ -15,8 +21,9 @@ export default function ComponentCard({ component, action, onAction, actionLabel
             className="btn btn--primary btn--sm"
             disabled={disabled}
             onClick={() => onAction?.(component)}
+            title={actionLabel}  // full text on hover
           >
-            {actionLabel}
+            {displayLabel}
           </button>
         )}
       </div>

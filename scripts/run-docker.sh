@@ -48,5 +48,5 @@ if [ "$SKIP_BUILD" -eq 0 ]; then
 	( cd frontend && npm install --silent && VITE_API_URL="$API_URL" npm run build )
 fi
 
-echo "[run-docker] docker compose up --build $DETACH"
-exec $DOCKER compose up --build $DETACH
+echo "[run-docker] docker-compose up --build $DETACH"
+exec docker-compose up --build $DETACH

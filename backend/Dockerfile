@@ -6,7 +6,25 @@
 #
 # Полноценный multi-stage вариант (сборка внутри контейнера) сохранён в
 # Dockerfile.multistage — он работает в средах с рабочим DNS в build.
+# RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+
 FROM eclipse-temurin:17-jre-jammy
+
+RUN rm -f /etc/apt/apt.conf.d/docker-clean && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    rm -rf /var/lib/apt/lists/*
+# RUN rm -f /etc/apt/apt.conf.d/docker-clean && \
+#     apt-get update && \
+#     apt-get install -y --no-install-recommends curl ca-certificates && \
+#     rm -rf /var/lib/apt/lists/*
+
+# ... rest of your app setup and HEALTHCHECK
+HEALTHCHECK --interval=60s --timeout=360s --start-period=180s --retries=30 \
+  CMD curl -f http://localhost:8080/actuator/health || exit 1
+# HEALTHCHECK --interval=30s --timeout=3s \
+#   CMD curl -f http://localhost:8080/actuator/health || exit 1
+
 WORKDIR /app
 
 # bash/coreutils присутствуют в jammy. mkfs.ext4 в образе нет — обёртка

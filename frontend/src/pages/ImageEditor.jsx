@@ -67,10 +67,22 @@ export default function ImageEditor() {
         {/* Левая колонка: параметры образа и выбранные зависимости */}
         <section className="editor__panel">
           <label className="field">
+            <span>
+              Название <span className="hint">({name.length}/40)</span>
+            </span>
+            <input
+              className="input"
+              value={name}
+              maxLength={40}
+              onChange={(e) => setField('name', e.target.value)}
+              placeholder="my-image"
+            />
+          </label>
+          {/* <label className="field">
             <span>Название</span>
             <input className="input" value={name}
                    onChange={(e) => setField('name', e.target.value)} placeholder="my-image" />
-          </label>
+          </label> */}
 
           <div className="field-row">
             <label className="field">
@@ -88,11 +100,25 @@ export default function ImageEditor() {
           </div>
 
           <label className="field">
+            <span>
+              Описание <span className="hint">({description.length}/300)</span>
+            </span>
+            <textarea
+              className="input"
+              rows={3}
+              value={description}
+              maxLength={300}
+              onChange={(e) => setField('description', e.target.value)}
+              placeholder="Назначение образа"
+            />
+          </label>
+
+          {/* <label className="field">
             <span>Описание</span>
             <textarea className="input" rows={3} value={description}
                       onChange={(e) => setField('description', e.target.value)}
                       placeholder="Назначение образа" />
-          </label>
+          </label> */}
 
           <div className="editor__deps">
             <div className="editor__deps-head">
