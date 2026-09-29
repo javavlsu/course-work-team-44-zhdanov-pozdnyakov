@@ -14,10 +14,6 @@ RUN rm -f /etc/apt/apt.conf.d/docker-clean && \
     apt-get update && \
     apt-get install -y --no-install-recommends curl && \
     rm -rf /var/lib/apt/lists/*
-# RUN rm -f /etc/apt/apt.conf.d/docker-clean && \
-#     apt-get update && \
-#     apt-get install -y --no-install-recommends curl ca-certificates && \
-#     rm -rf /var/lib/apt/lists/*
 
 # ... rest of your app setup and HEALTHCHECK
 HEALTHCHECK --interval=60s --timeout=360s --start-period=180s --retries=30 \

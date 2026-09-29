@@ -1,6 +1,7 @@
 package com.luckfox.imagebuilder.config;
 
 import com.luckfox.imagebuilder.entity.*;
+import com.luckfox.imagebuilder.service.*;
 import com.luckfox.imagebuilder.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -54,11 +55,23 @@ public class DataSeeder implements CommandLineRunner {
         com.luckfox.imagebuilder.entity.Component ffmpeg = comp("ffmpeg", pkg, "Обработка видео/аудио", 60, Set.of(libc));
         com.luckfox.imagebuilder.entity.Component openssh = comp("openssh", pkg, "SSH-сервер и клиент", 40, Set.of(libc));
 
-        // Готовые образы в библиотеке.
+        for (int i = 0; i < 400; i++){
+            comp("Dummy"+String.valueOf(i), pkg, "test test test", 10, Set.of());
+            
+        }
+
+        // Готовые образы в библиотеке. 
+        // broken bro
         image("CV Starter", "Базовый образ для задач компьютерного зрения",
-                "buildroot", "RV1103_Luckfox_Pico", "READY", Set.of(python, numpy, opencv));
+                "buildroot", "RV1103_Luckfox_Pico", "CREATED", Set.of(python, numpy, opencv));
         image("IoT Edge", "Образ с SSH и Python для периферийных задач",
-                "buildroot", "RV1106_Luckfox_Pico_Pro_Max", "READY", Set.of(python, openssh, wiringpy));
+                "buildroot", "RV1106_Luckfox_Pico_Pro_Max", "CREATED", Set.of(python, openssh, wiringpy));
+
+        for (int i = 0; i < 40; i++){
+            image("Dummy"+String.valueOf(i), "test",
+                "buildroot", "RV1103_Luckfox_Pico", "CREATED", Set.of(python, numpy, opencv));
+        }
+
 
         // Администратор.
         if (userRepository.findByEmail("admin@luckfox.io").isEmpty()) {
@@ -74,6 +87,8 @@ public class DataSeeder implements CommandLineRunner {
             userRepository.save(admin);
             log.info("DataSeeder: создан администратор admin@luckfox.io / Admin@123");
         }
+
+
     }
 
     private Role role(String name) {

@@ -26,6 +26,7 @@ public class ComponentService {
     @Transactional(readOnly = true)
     public List<ComponentDto> search(String name, Long typeId) {
         List<Component> result;
+        // need to make case for both filter and search
         if (typeId != null) {
             ComponentType type = componentTypeRepository.findById(typeId)
                     .orElseThrow(() -> new ResourceNotFoundException("Тип компонента не найден: " + typeId));

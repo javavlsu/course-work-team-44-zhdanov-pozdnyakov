@@ -14,6 +14,9 @@
 #   ./scripts/run-docker.sh --skip-build   # не пересобирать артефакты
 #
 set -euo pipefail
+sudo docker-compose down -v
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+export PATH="$JAVA_HOME/bin:$PATH"
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
@@ -42,7 +45,7 @@ done
 
 if [ "$SKIP_BUILD" -eq 0 ]; then
 	echo "[run-docker] (1/2) сборка backend (mvn package)…"
-	( cd backend && mvn -q package -DskipTests )
+	( cd backend && mvn -q package -DskipTests)
 
 	echo "[run-docker] (2/2) сборка frontend (npm run build, API=$API_URL)…"
 	( cd frontend && npm install --silent && VITE_API_URL="$API_URL" npm run build )
