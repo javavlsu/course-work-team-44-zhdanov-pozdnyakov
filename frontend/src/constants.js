@@ -8,3 +8,9 @@ export const BOARDS = [
 ];
 
 export const ROLES = ['USER', 'ADMIN'];
+
+// Значение '' — сортировка по умолчанию на сервере.
+export const PRICE_SORTS = [
+  { value: 'price_asc', label: 'Цена: по возрастанию' },
+  { value: 'price_desc', label: 'Цена: по убыванию' },
+];

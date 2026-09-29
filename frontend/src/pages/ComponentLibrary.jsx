@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import ComponentCard from '../components/ComponentCard';
 import Pagination from '../components/Pagination';
 import usePagedList from '../hooks/usePagedList';
+import { PRICE_SORTS } from '../constants';
 
 export default function ComponentLibrary() {
   const [types, setTypes] = useState([]);
@@ -18,7 +19,8 @@ export default function ComponentLibrary() {
     apiGetComponentTypes().then(({ data }) => setTypes(data)).catch(() => {});
   }, []);
 
-  const list = usePagedList(apiGetComponents, { search, type: typeId }, { size: 12 });
+  const [sort, setSort] = useState('');
+  const list = usePagedList(apiGetComponents, { search, type: typeId, sort }, { size: 12 });
   const error = actionError || list.error;
 
   const remove = async (c) => {
@@ -58,6 +60,10 @@ export default function ComponentLibrary() {
           {types.map((t) => (
             <option key={t.id} value={t.id}>{t.type}</option>
           ))}
+        </select>
+        <select className="input" value={sort} onChange={(e) => setSort(e.target.value)}>
+          <option value="">По названию</option>
+          {PRICE_SORTS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
         </select>
       </div>
 

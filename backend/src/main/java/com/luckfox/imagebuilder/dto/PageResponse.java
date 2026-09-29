@@ -31,6 +31,16 @@ public class PageResponse<T> {
                 page.getNumber(), page.getSize(), page.getTotalElements(), page.getTotalPages());
     }
 
+    /**
+     * Сортировка из параметра запроса: price_asc / price_desc — по стоимости
+     * (при равной цене — по умолчанию), иначе — сортировка по умолчанию.
+     */
+    public static Sort sort(String sort, Sort byDefault) {
+        if ("price_asc".equals(sort)) return Sort.by(Sort.Direction.ASC, "cost").and(byDefault);
+        if ("price_desc".equals(sort)) return Sort.by(Sort.Direction.DESC, "cost").and(byDefault);
+        return byDefault;
+    }
+
     /** Запрос страницы с защитой от отрицательного номера и слишком большого размера. */
     public static Pageable request(int page, int size, Sort sort) {
         return PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), MAX_SIZE), sort);

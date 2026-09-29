@@ -34,9 +34,12 @@ public class ImageController {
     public PageResponse<ImageDto> getAllImages(@RequestParam(required = false) String search,
                                                @RequestParam(required = false) String state,
                                                @RequestParam(required = false) String board,
+                                               // components=1,2,3 — образы, содержащие все перечисленные
+                                               @RequestParam(required = false) List<Long> components,
+                                               @RequestParam(required = false) String sort,
                                                @RequestParam(defaultValue = "0") int page,
                                                @RequestParam(defaultValue = "12") int size) {
-        return imageService.search(search, state, board, page, size);
+        return imageService.search(search, state, board, components, sort, page, size);
     }
 
     @GetMapping("/{id}")

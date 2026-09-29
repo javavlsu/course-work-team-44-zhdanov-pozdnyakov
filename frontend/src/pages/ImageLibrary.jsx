@@ -6,18 +6,25 @@ import ImageCard from '../components/ImageCard';
 import Pagination from '../components/Pagination';
 import { LABELS } from '../components/StatusBadge';
 import usePagedList from '../hooks/usePagedList';
-import { BOARDS } from '../constants';
+import ComponentFilter from '../components/ComponentFilter';
+import { BOARDS, PRICE_SORTS } from '../constants';
 
 export default function ImageLibrary() {
   const [search, setSearch] = useState('');
   const [state, setState] = useState('');
   const [board, setBoard] = useState('');
+  const [components, setComponents] = useState([]); // [{ id, name }]
+  const [sort, setSort] = useState('');
   const [actionError, setActionError] = useState('');
   const { isAuthenticated, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   // Автообновление статусов сборок каждые 5 с.
-  const list = usePagedList(apiGetImages, { search, state, board }, { size: 12, pollMs: 5000 });
+  const list = usePagedList(
+    apiGetImages,
+    { search, state, board, sort, components: components.map((c) => c.id).join(',') },
+    { size: 12, pollMs: 5000 },
+  );
   const error = actionError || list.error;
 
   const download = (image) => {
@@ -72,6 +79,11 @@ export default function ImageLibrary() {
           <option value="">Все платы</option>
           {BOARDS.map((b) => <option key={b} value={b}>{b}</option>)}
         </select>
+        <select className="input" value={sort} onChange={(e) => setSort(e.target.value)}>
+          <option value="">Сначала новые</option>
+          {PRICE_SORTS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+        </select>
+        <ComponentFilter selected={components} onChange={setComponents} />
       </div>
 
       {error && <div className="alert alert--error">{error}</div>}

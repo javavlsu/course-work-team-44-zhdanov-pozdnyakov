@@ -23,9 +23,10 @@ public class ComponentController {
     @GetMapping
     public PageResponse<ComponentDto> getAllComponents(@RequestParam(required = false) String search,
                                                        @RequestParam(required = false) Long type,
+                                                       @RequestParam(required = false) String sort,
                                                        @RequestParam(defaultValue = "0") int page,
                                                        @RequestParam(defaultValue = "20") int size) {
-        return componentService.search(search, type, page, size);
+        return componentService.search(search, type, sort, page, size);
     }
 
     @GetMapping("/{id}")

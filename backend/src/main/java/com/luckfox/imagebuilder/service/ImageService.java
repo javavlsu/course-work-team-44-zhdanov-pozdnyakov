@@ -11,7 +11,10 @@ import com.luckfox.imagebuilder.exception.ResourceNotFoundException;
 import com.luckfox.imagebuilder.repository.ComponentRepository;
 import com.luckfox.imagebuilder.repository.ImageRepository;
 import com.luckfox.imagebuilder.repository.UserRepository;
+import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,9 +48,14 @@ public class ImageService {
     private final UserRepository userRepository;
     private final BuildService buildService;
 
-    /** Страница библиотеки: поиск по названию + фильтры по статусу и плате, новые сверху. */
+    /**
+     * Страница библиотеки: поиск по названию + фильтры по статусу, плате и компонентам
+     * (образ должен содержать все выбранные компоненты, с учётом транзитивных
+     * зависимостей). Сортировка — новые сверху или по цене.
+     */
     @Transactional(readOnly = true)
-    public PageResponse<ImageDto> search(String name, String state, String board, int page, int size) {
+    public PageResponse<ImageDto> search(String name, String state, String board, List<Long> componentIds,
+                                         String sort, int page, int size) {
         Specification<Image> spec = (root, query, cb) -> {
             List<Predicate> where = new ArrayList<>();
             if (name != null && !name.isBlank()) {
@@ -59,10 +67,23 @@ public class ImageService {
             if (board != null && !board.isBlank()) {
                 where.add(cb.equal(root.get("board"), board));
             }
+            if (componentIds != null) {
+                // По EXISTS-подзапросу на каждый компонент — без join-дублей в основной выборке.
+                for (Long componentId : new LinkedHashSet<>(componentIds)) {
+                    Subquery<Long> sq = query.subquery(Long.class);
+                    Root<Image> img = sq.from(Image.class);
+                    Join<Image, Component> comp = img.join("components");
+                    sq.select(img.get("id")).where(
+                            cb.equal(img.get("id"), root.get("id")),
+                            cb.equal(comp.get("id"), componentId));
+                    where.add(cb.exists(sq));
+                }
+            }
             return cb.and(where.toArray(new Predicate[0]));
         };
+        Sort order = PageResponse.sort(sort, Sort.by(Sort.Direction.DESC, "id"));
         return PageResponse.from(
-                imageRepository.findAll(spec, PageResponse.request(page, size, Sort.by(Sort.Direction.DESC, "id"))),
+                imageRepository.findAll(spec, PageResponse.request(page, size, order)),
                 ImageDto::from);
     }
 

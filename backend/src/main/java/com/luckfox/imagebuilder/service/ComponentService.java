@@ -37,7 +37,7 @@ public class ComponentService {
      * (AND); пагинация выполняется в SQL (LIMIT/OFFSET + COUNT).
      */
     @Transactional(readOnly = true)
-    public PageResponse<ComponentDto> search(String name, Long typeId, int page, int size) {
+    public PageResponse<ComponentDto> search(String name, Long typeId, String sort, int page, int size) {
         Specification<Component> spec = (root, query, cb) -> {
             List<Predicate> where = new ArrayList<>();
             if (name != null && !name.isBlank()) {
@@ -49,7 +49,8 @@ public class ComponentService {
             return cb.and(where.toArray(new Predicate[0]));
         };
         return PageResponse.from(
-                componentRepository.findAll(spec, PageResponse.request(page, size, Sort.by("name", "id"))),
+                componentRepository.findAll(spec, PageResponse.request(page, size,
+                        PageResponse.sort(sort, Sort.by("name", "id")))),
                 ComponentDto::from);
     }
 

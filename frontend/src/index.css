@@ -204,6 +204,23 @@ h1, h2, h3 { margin: 0; }
 .chip--removable { border: none; cursor: pointer; font: inherit; font-size: 12px; }
 .chip--removable:hover { background: var(--error-soft); color: var(--error); }
 
+/* ---------- Component filter ---------- */
+.picker { position: relative; flex: 1 1 100%; }
+.picker .input { width: 100%; }
+.picker__menu {
+  position: absolute; z-index: 10; left: 0; right: 0; top: 44px; margin: 0; padding: 4px;
+  list-style: none; background: var(--white); border: var(--border); border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg); max-height: 280px; overflow-y: auto;
+}
+.picker__menu button {
+  width: 100%; display: flex; justify-content: space-between; gap: 8px; padding: 8px 10px;
+  border: none; background: none; font: inherit; font-size: 14px; text-align: left; cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+.picker__menu button:hover { background: var(--gray-100); }
+.picker__empty { padding: 8px 10px; }
+.picker__chips { margin-top: 8px; }
+
 /* ---------- Admin actions / Pagination ---------- */
 .card__admin { display: flex; gap: 8px; padding-top: 10px; border-top: 1px solid var(--gray-200); }
 .btn--danger { background: transparent; color: var(--error); border: 1px solid var(--error-soft); }
