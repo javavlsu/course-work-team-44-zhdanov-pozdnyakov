@@ -2,6 +2,7 @@ package com.luckfox.imagebuilder.controller;
 
 import com.luckfox.imagebuilder.dto.BuildRequest;
 import com.luckfox.imagebuilder.dto.ImageDto;
+import com.luckfox.imagebuilder.dto.PageResponse;
 import com.luckfox.imagebuilder.entity.Image;
 import com.luckfox.imagebuilder.exception.BadRequestException;
 import com.luckfox.imagebuilder.service.ImageService;
@@ -12,6 +13,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,13 +31,30 @@ public class ImageController {
     private final ImageService imageService;
 
     @GetMapping
-    public List<ImageDto> getAllImages() {
-        return imageService.findAllDto();
+    public PageResponse<ImageDto> getAllImages(@RequestParam(required = false) String search,
+                                               @RequestParam(required = false) String state,
+                                               @RequestParam(required = false) String board,
+                                               @RequestParam(defaultValue = "0") int page,
+                                               @RequestParam(defaultValue = "12") int size) {
+        return imageService.search(search, state, board, page, size);
     }
 
     @GetMapping("/{id}")
     public ImageDto getImageById(@PathVariable Long id) {
         return imageService.getDtoById(id);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ImageDto> update(@PathVariable Long id, @Valid @RequestBody BuildRequest request) {
+        return ResponseEntity.accepted().body(imageService.update(id, request));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        imageService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/build")

@@ -1,23 +1,20 @@
 import React from 'react';
 import StatusBadge from './StatusBadge';
 
-export default function ImageCard({ image, onDownload }) {
-  const description_text = image.description || 'Без описания'
-  const name_text = image.name || `Образ #${image.id}`
+const MAX_NAME = 40;
+const MAX_DESC = 300;
+
+const cut = (text, max) => (text.length > max ? text.slice(0, max - 1) + '…' : text);
+
+export default function ImageCard({ image, onDownload, onEdit, onDelete }) {
+  const busy = image.state === 'QUEUED' || image.state === 'BUILDING';
   return (
     <article className="card">
       <div className="card__header">
-        <h3 className="card__title">
-          
-                  {name_text.length > 40 ? name_text.slice(0, MAX_LABEL - 1) + '…' : name_text}
-        </h3>
+        <h3 className="card__title">{cut(image.name || `Образ #${image.id}`, MAX_NAME)}</h3>
         <StatusBadge state={image.state} />
       </div>
-      <span className="card__desc">
-
-        {description_text.length > 300 ? description_text.slice(0, MAX_LABEL - 1) + '…' : description_text}
-      </span>
-      {/* <p className="card__desc" onChange={(e) => setField('name', e.target.value)} maxLength={300} >{image.description || 'Без описания'}</p> */}
+      <span className="card__desc">{cut(image.description || 'Без описания', MAX_DESC)}</span>
       <div className="card__meta">
         <span className="tag">{image.distro || '—'}</span>
         <span className="tag">{image.board || '—'}</span>
@@ -40,6 +37,19 @@ export default function ImageCard({ image, onDownload }) {
           </button>
         )}
       </div>
+      {(onEdit || onDelete) && (
+        <div className="card__admin">
+          {onEdit && (
+            <button className="btn btn--ghost btn--sm" disabled={busy}
+                    title={busy ? 'Дождитесь окончания сборки' : 'Изменить и пересобрать'}
+                    onClick={() => onEdit(image)}>Изменить</button>
+          )}
+          {onDelete && (
+            <button className="btn btn--danger btn--sm" disabled={image.state === 'BUILDING'}
+                    onClick={() => onDelete(image)}>Удалить</button>
+          )}
+        </div>
+      )}
     </article>
   );
 }

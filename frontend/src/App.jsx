@@ -10,6 +10,7 @@ import ComponentLibrary from './pages/ComponentLibrary';
 import ImageEditor from './pages/ImageEditor';
 import ComponentEditor from './pages/ComponentEditor';
 import Account from './pages/Account';
+import UserManagement from './pages/UserManagement';
 
 export default function App() {
   const { loading } = useAuth();
@@ -41,6 +42,14 @@ export default function App() {
             element={
               <ProtectedRoute adminOnly>
                 <ComponentEditor />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute adminOnly>
+                <UserManagement />
               </ProtectedRoute>
             }
           />

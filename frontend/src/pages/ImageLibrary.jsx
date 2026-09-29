@@ -1,33 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiGetImages, apiDownloadUrl, extractError } from '../api/api';
+import { apiGetImages, apiDeleteImage, apiDownloadUrl, extractError } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import ImageCard from '../components/ImageCard';
+import Pagination from '../components/Pagination';
+import { LABELS } from '../components/StatusBadge';
+import usePagedList from '../hooks/usePagedList';
+import { BOARDS } from '../constants';
 
 export default function ImageLibrary() {
-  const [images, setImages] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const { isAuthenticated } = useAuth();
+  const [search, setSearch] = useState('');
+  const [state, setState] = useState('');
+  const [board, setBoard] = useState('');
+  const [actionError, setActionError] = useState('');
+  const { isAuthenticated, isAdmin } = useAuth();
   const navigate = useNavigate();
 
-  const load = async () => {
-    try {
-      const { data } = await apiGetImages();
-      setImages(data);
-    } catch (e) {
-      setError(extractError(e, 'Не удалось загрузить образы'));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    load();
-    // Автообновление статусов сборок, пока есть незавершённые.
-    const t = setInterval(load, 5000);
-    return () => clearInterval(t);
-  }, []);
+  // Автообновление статусов сборок каждые 5 с.
+  const list = usePagedList(apiGetImages, { search, state, board }, { size: 12, pollMs: 5000 });
+  const error = actionError || list.error;
 
   const download = (image) => {
     const token = localStorage.getItem('token');
@@ -42,7 +33,18 @@ export default function ImageLibrary() {
         a.click();
         URL.revokeObjectURL(url);
       })
-      .catch((e) => setError(e.message));
+      .catch((e) => setActionError(e.message));
+  };
+
+  const remove = async (image) => {
+    if (!window.confirm(`Удалить образ «${image.name || image.id}»?`)) return;
+    setActionError('');
+    try {
+      await apiDeleteImage(image.id);
+      await list.reload();
+    } catch (e) {
+      setActionError(extractError(e, 'Не удалось удалить образ'));
+    }
   };
 
   return (
@@ -59,18 +61,39 @@ export default function ImageLibrary() {
         )}
       </div>
 
+      <div className="toolbar">
+        <input className="input input--search" placeholder="Поиск образов…"
+               value={search} onChange={(e) => setSearch(e.target.value)} />
+        <select className="input" value={state} onChange={(e) => setState(e.target.value)}>
+          <option value="">Все статусы</option>
+          {Object.entries(LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+        </select>
+        <select className="input" value={board} onChange={(e) => setBoard(e.target.value)}>
+          <option value="">Все платы</option>
+          {BOARDS.map((b) => <option key={b} value={b}>{b}</option>)}
+        </select>
+      </div>
+
       {error && <div className="alert alert--error">{error}</div>}
-      {loading ? (
+      {list.loading ? (
         <div className="empty">Загрузка…</div>
-      ) : images.length === 0 ? (
-        <div className="empty">Образов пока нет</div>
+      ) : list.items.length === 0 ? (
+        <div className="empty">Образов не найдено</div>
       ) : (
         <div className="grid">
-          {images.map((img) => (
-            <ImageCard key={img.id} image={img} onDownload={download} />
+          {list.items.map((img) => (
+            <ImageCard
+              key={img.id}
+              image={img}
+              onDownload={download}
+              onEdit={isAdmin ? () => navigate(`/editor/image?id=${img.id}`) : undefined}
+              onDelete={isAdmin ? remove : undefined}
+            />
           ))}
         </div>
       )}
+      <Pagination page={list.page} totalPages={list.totalPages}
+                  totalElements={list.totalElements} onChange={list.setPage} />
     </div>
   );
 }

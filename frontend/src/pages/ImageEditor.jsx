@@ -1,43 +1,54 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { apiGetComponents, apiGetComponentTypes, apiBuildImage, extractError } from '../api/api';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  apiGetComponents, apiGetComponentTypes, apiBuildImage, apiGetImage, apiUpdateImage, extractError,
+} from '../api/api';
 import { useEditorStore } from '../store/editorStore';
-
-const DISTROS = ['buildroot', 'ubuntu', 'busybox'];
-const BOARDS = [
-  'RV1103_Luckfox_Pico',
-  'RV1103_Luckfox_Pico_Mini',
-  'RV1103_Luckfox_Pico_Plus',
-  'RV1106_Luckfox_Pico_Pro_Max',
-];
+import { useAuth } from '../context/AuthContext';
+import Pagination from '../components/Pagination';
+import usePagedList from '../hooks/usePagedList';
+import { BOARDS, DISTROS } from '../constants';
 
 export default function ImageEditor() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const editId = params.get('id');
+  const { isAdmin } = useAuth();
   const {
-    name, description, distro, board, selected,
-    setField, addComponent, removeComponent, isSelected, totalCost, reset,
+    editingId, name, description, distro, board, selected,
+    setField, addComponent, removeComponent, isSelected, totalCost, reset, loadImage,
   } = useEditorStore();
 
-  const [available, setAvailable] = useState([]);
   const [types, setTypes] = useState([]);
   const [search, setSearch] = useState('');
   const [typeId, setTypeId] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
+  // Каталог: поиск и фильтр по типу передаются вместе, пагинация — на сервере.
+  const catalog = usePagedList(apiGetComponents, { search, type: typeId }, { size: 10 });
+
   useEffect(() => {
     apiGetComponentTypes().then(({ data }) => setTypes(data)).catch(() => {});
   }, []);
 
+  // Режим редактирования (?id=) — загружаем образ; при переходе к новому образу
+  // сбрасываем данные, оставшиеся от редактирования.
   useEffect(() => {
-    const t = setTimeout(() => {
-      const params = {};
-      if (search) params.search = search;
-      if (typeId) params.type = typeId;
-      apiGetComponents(params).then(({ data }) => setAvailable(data)).catch(() => {});
-    }, 250);
-    return () => clearTimeout(t);
-  }, [search, typeId]);
+    if (!editId) {
+      if (useEditorStore.getState().editingId) reset();
+      return;
+    }
+    if (!isAdmin) {
+      navigate('/library/images', { replace: true });
+      return;
+    }
+    apiGetImage(editId)
+      .then(({ data }) => loadImage(data))
+      .catch((e) => setError(extractError(e, 'Не удалось загрузить образ')));
+  }, [editId, isAdmin, navigate, reset, loadImage]);
+
+  const isEdit = !!editId;
 
   const submit = async () => {
     setError('');
@@ -45,14 +56,19 @@ export default function ImageEditor() {
     if (selected.length === 0) return setError('Добавьте хотя бы один компонент');
     setBusy(true);
     try {
-      await apiBuildImage({
+      const body = {
         name, description, distro, board,
         componentIds: selected.map((c) => c.id),
-      });
+      };
+      if (isEdit) {
+        await apiUpdateImage(editingId, body);
+      } else {
+        await apiBuildImage(body);
+      }
       reset();
       navigate('/library/images');
     } catch (e) {
-      setError(extractError(e, 'Не удалось заказать сборку'));
+      setError(extractError(e, isEdit ? 'Не удалось сохранить образ' : 'Не удалось заказать сборку'));
     } finally {
       setBusy(false);
     }
@@ -60,7 +76,10 @@ export default function ImageEditor() {
 
   return (
     <div className="page editor">
-      <h1 className="page__title">Создать образ</h1>
+      <h1 className="page__title">{isEdit ? `Редактирование образа #${editId}` : 'Создать образ'}</h1>
+      {isEdit && (
+        <p className="page__subtitle">После сохранения образ будет пересобран с новыми параметрами.</p>
+      )}
       {error && <div className="alert alert--error">{error}</div>}
 
       <div className="editor__layout">
@@ -78,11 +97,6 @@ export default function ImageEditor() {
               placeholder="my-image"
             />
           </label>
-          {/* <label className="field">
-            <span>Название</span>
-            <input className="input" value={name}
-                   onChange={(e) => setField('name', e.target.value)} placeholder="my-image" />
-          </label> */}
 
           <div className="field-row">
             <label className="field">
@@ -113,13 +127,6 @@ export default function ImageEditor() {
             />
           </label>
 
-          {/* <label className="field">
-            <span>Описание</span>
-            <textarea className="input" rows={3} value={description}
-                      onChange={(e) => setField('description', e.target.value)}
-                      placeholder="Назначение образа" />
-          </label> */}
-
           <div className="editor__deps">
             <div className="editor__deps-head">
               <h3>Зависимости ({selected.length})</h3>
@@ -143,8 +150,14 @@ export default function ImageEditor() {
           </div>
 
           <button className="btn btn--primary btn--block" disabled={busy} onClick={submit}>
-            {busy ? 'Отправка…' : 'Заказать образ'}
+            {busy ? 'Отправка…' : isEdit ? 'Сохранить и пересобрать' : 'Заказать образ'}
           </button>
+          {isEdit && (
+            <button className="btn btn--ghost btn--block" style={{ marginTop: 8 }}
+                    onClick={() => { reset(); navigate('/library/images'); }}>
+              Отмена
+            </button>
+          )}
         </section>
 
         {/* Правая колонка: каталог для добавления */}
@@ -158,8 +171,9 @@ export default function ImageEditor() {
               {types.map((t) => <option key={t.id} value={t.id}>{t.type}</option>)}
             </select>
           </div>
+          {catalog.error && <div className="alert alert--error">{catalog.error}</div>}
           <ul className="catalog-list">
-            {available.map((c) => (
+            {catalog.items.map((c) => (
               <li key={c.id} className="catalog-item">
                 <div>
                   <div className="catalog-item__name">{c.name}</div>
@@ -171,8 +185,10 @@ export default function ImageEditor() {
                 </button>
               </li>
             ))}
-            {available.length === 0 && <li className="hint">Ничего не найдено</li>}
+            {!catalog.loading && catalog.items.length === 0 && <li className="hint">Ничего не найдено</li>}
           </ul>
+          <Pagination page={catalog.page} totalPages={catalog.totalPages}
+                      totalElements={catalog.totalElements} onChange={catalog.setPage} />
         </aside>
       </div>
     </div>

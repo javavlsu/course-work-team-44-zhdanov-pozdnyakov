@@ -117,6 +117,8 @@ h1, h2, h3 { margin: 0; }
 .hint { font-size: 12px; color: var(--gray-500); margin: 4px 0 0; }
 
 .toolbar { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+.toolbar .input { width: auto; }
+.toolbar .input--search { flex: 1; }
 
 /* ---------- Alerts ---------- */
 .alert { padding: 10px 14px; border-radius: var(--radius-sm); margin-bottom: 16px; font-size: 14px; }
@@ -195,6 +197,21 @@ h1, h2, h3 { margin: 0; }
 .catalog-item__type { font-size: 12px; color: var(--gray-500); }
 .dep-checks { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; }
 .dep-check { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.catalog-item--active { border-color: var(--accent); background: var(--accent-soft); }
+.catalog-item__actions { display: flex; gap: 4px; }
+.icon-btn--edit:hover { background: var(--accent-soft); color: var(--accent); }
+.icon-btn:disabled { opacity: 0.3; cursor: not-allowed; background: none; color: inherit; }
+.chip--removable { border: none; cursor: pointer; font: inherit; font-size: 12px; }
+.chip--removable:hover { background: var(--error-soft); color: var(--error); }
+
+/* ---------- Admin actions / Pagination ---------- */
+.card__admin { display: flex; gap: 8px; padding-top: 10px; border-top: 1px solid var(--gray-200); }
+.btn--danger { background: transparent; color: var(--error); border: 1px solid var(--error-soft); }
+.btn--danger:hover:not(:disabled) { background: var(--error-soft); }
+.pagination {
+  display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;
+  margin-top: 18px; font-size: 13px; color: var(--gray-500);
+}
 
 /* ---------- Profile ---------- */
 .profile {

@@ -2,6 +2,7 @@ package com.luckfox.imagebuilder.controller;
 
 import com.luckfox.imagebuilder.dto.ComponentDto;
 import com.luckfox.imagebuilder.dto.ComponentRequest;
+import com.luckfox.imagebuilder.dto.PageResponse;
 import com.luckfox.imagebuilder.service.ComponentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,9 +21,11 @@ public class ComponentController {
     private final ComponentService componentService;
 
     @GetMapping
-    public List<ComponentDto> getAllComponents(@RequestParam(required = false) String search,
-                                               @RequestParam(required = false) Long type) {
-        return componentService.search(search, type);
+    public PageResponse<ComponentDto> getAllComponents(@RequestParam(required = false) String search,
+                                                       @RequestParam(required = false) Long type,
+                                                       @RequestParam(defaultValue = "0") int page,
+                                                       @RequestParam(defaultValue = "20") int size) {
+        return componentService.search(search, type, page, size);
     }
 
     @GetMapping("/{id}")

@@ -1,5 +1,6 @@
 package com.luckfox.imagebuilder.config;
 
+import com.luckfox.imagebuilder.dto.BuildRequest;
 import com.luckfox.imagebuilder.entity.*;
 import com.luckfox.imagebuilder.service.*;
 import com.luckfox.imagebuilder.repository.*;
@@ -11,24 +12,30 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
  * Наполнение БД стартовыми данными: роли, типы компонентов, каталог компонентов
- * с зависимостями, администратор и несколько готовых образов в библиотеке.
+ * с зависимостями, администратор и несколько образов в библиотеке.
  * Выполняется один раз — при пустой таблице компонентов.
+ *
+ * Образы заказываются от имени администратора через {@link ImageService#orderBuild}
+ * — тот же конвейер, что и в редакторе образов: разрешение зависимостей, очередь,
+ * сборка и готовый .img для скачивания.
  */
 @Component
 @RequiredArgsConstructor
 public class DataSeeder implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DataSeeder.class);
+    private static final String ADMIN_EMAIL = "admin@luckfox.io";
 
     private final RoleRepository roleRepository;
     private final ComponentTypeRepository componentTypeRepository;
     private final ComponentRepository componentRepository;
     private final UserRepository userRepository;
-    private final ImageRepository imageRepository;
+    private final ImageService imageService;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -55,40 +62,37 @@ public class DataSeeder implements CommandLineRunner {
         com.luckfox.imagebuilder.entity.Component ffmpeg = comp("ffmpeg", pkg, "Обработка видео/аудио", 60, Set.of(libc));
         com.luckfox.imagebuilder.entity.Component openssh = comp("openssh", pkg, "SSH-сервер и клиент", 40, Set.of(libc));
 
-        for (int i = 0; i < 400; i++){
-            comp("Dummy"+String.valueOf(i), pkg, "test test test", 10, Set.of());
-            
+        // Тестовые компоненты — чтобы каталог занимал несколько страниц.
+        for (int i = 0; i < 60; i++) {
+            comp("Dummy" + i, i % 2 == 0 ? pkg : lib, "Тестовый компонент", 10, Set.of());
         }
 
-        // Готовые образы в библиотеке. 
-        // broken bro
-        image("CV Starter", "Базовый образ для задач компьютерного зрения",
-                "buildroot", "RV1103_Luckfox_Pico", "CREATED", Set.of(python, numpy, opencv));
-        image("IoT Edge", "Образ с SSH и Python для периферийных задач",
-                "buildroot", "RV1106_Luckfox_Pico_Pro_Max", "CREATED", Set.of(python, openssh, wiringpy));
-
-        for (int i = 0; i < 40; i++){
-            image("Dummy"+String.valueOf(i), "test",
-                "buildroot", "RV1103_Luckfox_Pico", "CREATED", Set.of(python, numpy, opencv));
-        }
-
-
-        // Администратор.
-        if (userRepository.findByEmail("admin@luckfox.io").isEmpty()) {
+        // Администратор создаётся до образов: стартовые образы заказываются от его имени.
+        if (userRepository.findByEmail(ADMIN_EMAIL).isEmpty()) {
             User admin = new User();
             admin.setName("Admin");
             admin.setSurname("Luckfox");
-            admin.setEmail("admin@luckfox.io");
+            admin.setEmail(ADMIN_EMAIL);
             admin.setPassword(passwordEncoder.encode("Admin@123"));
             Set<Role> roles = new HashSet<>();
             roles.add(adminRole);
             roles.add(userRole);
             admin.setRoles(roles);
             userRepository.save(admin);
-            log.info("DataSeeder: создан администратор admin@luckfox.io / Admin@123");
+            log.info("DataSeeder: создан администратор {} / Admin@123", ADMIN_EMAIL);
         }
 
+        // Образы в библиотеке — через обычный заказ сборки.
+        image("CV Starter", "Базовый образ для задач компьютерного зрения",
+                "RV1103_Luckfox_Pico", List.of(opencv));
+        image("IoT Edge", "Образ с SSH и Python для периферийных задач",
+                "RV1106_Luckfox_Pico_Pro_Max", List.of(openssh, wiringpy));
+        image("Media Box", "Обработка видео и удалённый доступ",
+                "RV1103_Luckfox_Pico_Plus", List.of(ffmpeg, openssh));
 
+        for (int i = 0; i < 12; i++) {
+            image("Dummy" + i, "Тестовый образ", "RV1103_Luckfox_Pico", List.of(numpy));
+        }
     }
 
     private Role role(String name) {
@@ -119,16 +123,14 @@ public class DataSeeder implements CommandLineRunner {
         return componentRepository.save(c);
     }
 
-    private void image(String name, String desc, String distro, String board, String state,
-                       Set<com.luckfox.imagebuilder.entity.Component> comps) {
-        Image img = new Image();
-        img.setName(name);
-        img.setDescription(desc);
-        img.setDistro(distro);
-        img.setBoard(board);
-        img.setState(state);
-        img.setComponents(new HashSet<>(comps));
-        img.setCost(comps.stream().mapToLong(com.luckfox.imagebuilder.entity.Component::getCost).sum());
-        imageRepository.save(img);
+    private void image(String name, String desc, String board,
+                       List<com.luckfox.imagebuilder.entity.Component> comps) {
+        imageService.orderBuild(BuildRequest.builder()
+                .name(name)
+                .description(desc)
+                .distro("buildroot")
+                .board(board)
+                .componentIds(comps.stream().map(com.luckfox.imagebuilder.entity.Component::getId).toList())
+                .build(), ADMIN_EMAIL);
     }
 }

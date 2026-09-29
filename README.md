@@ -83,12 +83,18 @@ React + Vite (React Router, Zustand, Axios) · Docker · Bash/Python (ворке
 |------|------|--------|
 | POST | `/api/auth/register`, `/api/auth/login` | public |
 | GET | `/api/users/me`, `/api/users/me/images` | auth |
-| GET | `/api/components?search=&type=`, `/api/components/{id}` | public |
+| GET | `/api/users?search=&role=&page=&size=`, `/api/users/{id}` | ADMIN |
+| POST/PUT/DELETE | `/api/users`, `/api/users/{id}` | ADMIN |
+| GET | `/api/components?search=&type=&page=&size=`, `/api/components/{id}` | public |
 | POST/PUT/DELETE | `/api/components`, `/api/components/{id}` | ADMIN |
 | GET | `/api/component-types` | public |
-| GET | `/api/images`, `/api/images/{id}` | public |
+| GET | `/api/images?search=&state=&board=&page=&size=`, `/api/images/{id}` | public |
 | POST | `/api/images/build` | auth |
+| PUT/DELETE | `/api/images/{id}` (PUT — изменение с пересборкой) | ADMIN |
 | GET | `/api/images/{id}/download` | auth |
+
+Списки постраничные (нумерация страниц с 0, `size` ≤ 100), ответ:
+`{ content, page, size, totalElements, totalPages }`. Поиск и фильтры применяются совместно.
 
 ## Сборка образов (toolchain)
 

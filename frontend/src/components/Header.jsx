@@ -25,7 +25,10 @@ export default function Header() {
           <NavLink to="/editor/image" className="nav-link">Создать образ</NavLink>
         )}
         {isAdmin && (
-          <NavLink to="/editor/component" className="nav-link">+ Компонент</NavLink>
+          <>
+            <NavLink to="/editor/component" className="nav-link">+ Компонент</NavLink>
+            <NavLink to="/admin/users" className="nav-link">Пользователи</NavLink>
+          </>
         )}
       </nav>
 

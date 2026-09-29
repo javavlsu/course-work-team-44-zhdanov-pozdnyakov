@@ -2,6 +2,7 @@ package com.luckfox.imagebuilder.service;
 
 import com.luckfox.imagebuilder.dto.BuildRequest;
 import com.luckfox.imagebuilder.dto.ImageDto;
+import com.luckfox.imagebuilder.dto.PageResponse;
 import com.luckfox.imagebuilder.entity.Component;
 import com.luckfox.imagebuilder.entity.Image;
 import com.luckfox.imagebuilder.entity.User;
@@ -10,13 +11,22 @@ import com.luckfox.imagebuilder.exception.ResourceNotFoundException;
 import com.luckfox.imagebuilder.repository.ComponentRepository;
 import com.luckfox.imagebuilder.repository.ImageRepository;
 import com.luckfox.imagebuilder.repository.UserRepository;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -27,6 +37,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class ImageService {
 
+    private static final Logger log = LoggerFactory.getLogger(ImageService.class);
     private static final String DEFAULT_BOARD = "RV1103_Luckfox_Pico";
 
     private final ImageRepository imageRepository;
@@ -34,9 +45,25 @@ public class ImageService {
     private final UserRepository userRepository;
     private final BuildService buildService;
 
+    /** Страница библиотеки: поиск по названию + фильтры по статусу и плате, новые сверху. */
     @Transactional(readOnly = true)
-    public List<ImageDto> findAllDto() {
-        return imageRepository.findAll().stream().map(ImageDto::from).toList();
+    public PageResponse<ImageDto> search(String name, String state, String board, int page, int size) {
+        Specification<Image> spec = (root, query, cb) -> {
+            List<Predicate> where = new ArrayList<>();
+            if (name != null && !name.isBlank()) {
+                where.add(cb.like(cb.lower(root.get("name")), "%" + name.trim().toLowerCase() + "%"));
+            }
+            if (state != null && !state.isBlank()) {
+                where.add(cb.equal(root.get("state"), state.toUpperCase()));
+            }
+            if (board != null && !board.isBlank()) {
+                where.add(cb.equal(root.get("board"), board));
+            }
+            return cb.and(where.toArray(new Predicate[0]));
+        };
+        return PageResponse.from(
+                imageRepository.findAll(spec, PageResponse.request(page, size, Sort.by(Sort.Direction.DESC, "id"))),
+                ImageDto::from);
     }
 
     @Transactional(readOnly = true)
@@ -60,7 +87,59 @@ public class ImageService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден: " + userEmail));
 
-        // Загружаем явно выбранные компоненты.
+        Image image = new Image();
+        applyAndQueue(image, req);
+        image = imageRepository.save(image);
+
+        // Привязка образа к пользователю (user_image_order).
+        if (user.getOrderedImages() == null) {
+            user.setOrderedImages(new HashSet<>());
+        }
+        user.getOrderedImages().add(image);
+        userRepository.save(user);
+
+        scheduleBuild(image.getId());
+        return ImageDto.from(image);
+    }
+
+    /**
+     * Изменение образа администратором: новые параметры и состав, пересчёт
+     * зависимостей и повторная постановка в очередь сборки.
+     */
+    @Transactional
+    public ImageDto update(Long id, BuildRequest req) {
+        Image image = getById(id);
+        if ("QUEUED".equals(image.getState()) || "BUILDING".equals(image.getState())) {
+            throw new BadRequestException("Образ сейчас в очереди или собирается — дождитесь окончания сборки");
+        }
+        String oldArtifact = image.getArtifactPath();
+        applyAndQueue(image, req);
+        image.setArtifactPath(null);
+        image.setBuildLog(null);
+        image = imageRepository.save(image);
+
+        afterCommit(() -> deleteArtifact(oldArtifact));
+        scheduleBuild(image.getId());
+        return ImageDto.from(image);
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        Image image = getById(id);
+        if ("BUILDING".equals(image.getState())) {
+            throw new BadRequestException("Образ сейчас собирается — удалить его можно после окончания сборки");
+        }
+        // Связь «пользователь заказал образ» принадлежит User — снимаем её до удаления.
+        for (User u : userRepository.findByOrderedImagesContains(image)) {
+            u.getOrderedImages().remove(image);
+        }
+        String artifact = image.getArtifactPath();
+        imageRepository.delete(image);
+        afterCommit(() -> deleteArtifact(artifact));
+    }
+
+    /** Общая часть создания и изменения: поля, разрешение зависимостей, стоимость, QUEUED. */
+    private void applyAndQueue(Image image, BuildRequest req) {
         Set<Component> selected = new LinkedHashSet<>();
         for (Long id : req.getComponentIds()) {
             selected.add(componentRepository.findById(id)
@@ -71,41 +150,44 @@ public class ImageService {
         Set<Component> resolved = resolveDependencies(selected);
         detectCycles(resolved);
 
-        long totalCost = resolved.stream().mapToLong(Component::getCost).sum();
-
-        Image image = new Image();
         image.setName(req.getName());
         image.setDescription(req.getDescription());
         image.setDistro(req.getDistro());
         image.setBoard(req.getBoard() == null || req.getBoard().isBlank()
                 ? DEFAULT_BOARD : req.getBoard());
         image.setState("QUEUED");
-        image.setCost(totalCost);
+        image.setCost(resolved.stream().mapToLong(Component::getCost).sum());
         image.setComponents(resolved);
-        image = imageRepository.save(image);
+    }
 
-        // Привязка образа к пользователю (user_image_order).
-        if (user.getOrderedImages() == null) {
-            user.setOrderedImages(new HashSet<>());
-        }
-        user.getOrderedImages().add(image);
-        userRepository.save(user);
+    /**
+     * Фоновую сборку запускаем строго ПОСЛЕ коммита транзакции, иначе
+     * async-поток может не найти ещё не сохранённый образ.
+     */
+    private void scheduleBuild(Long imageId) {
+        afterCommit(() -> buildService.build(imageId));
+    }
 
-        // Фоновую сборку запускаем строго ПОСЛЕ коммита транзакции, иначе
-        // async-поток может не найти ещё не сохранённый образ.
-        final Long imageId = image.getId();
+    private void afterCommit(Runnable action) {
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-                    buildService.build(imageId);
+                    action.run();
                 }
             });
         } else {
-            buildService.build(imageId);
+            action.run();
         }
+    }
 
-        return ImageDto.from(image);
+    private void deleteArtifact(String artifactPath) {
+        if (artifactPath == null) return;
+        try {
+            Files.deleteIfExists(Paths.get(artifactPath));
+        } catch (IOException e) {
+            log.warn("Не удалось удалить артефакт {}: {}", artifactPath, e.getMessage());
+        }
     }
 
     /** BFS по графу зависимостей: возвращает выбранные компоненты + все требуемые ими. */

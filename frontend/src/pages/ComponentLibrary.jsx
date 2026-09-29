@@ -1,39 +1,36 @@
 import React, { useEffect, useState } from 'react';
-import { apiGetComponents, apiGetComponentTypes, extractError } from '../api/api';
+import { useNavigate } from 'react-router-dom';
+import { apiGetComponents, apiGetComponentTypes, apiDeleteComponent, extractError } from '../api/api';
+import { useAuth } from '../context/AuthContext';
 import ComponentCard from '../components/ComponentCard';
+import Pagination from '../components/Pagination';
+import usePagedList from '../hooks/usePagedList';
 
 export default function ComponentLibrary() {
-  const [components, setComponents] = useState([]);
   const [types, setTypes] = useState([]);
   const [search, setSearch] = useState('');
   const [typeId, setTypeId] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [actionError, setActionError] = useState('');
+  const { isAdmin } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     apiGetComponentTypes().then(({ data }) => setTypes(data)).catch(() => {});
   }, []);
 
-  const load = async () => {
-    setLoading(true);
+  const list = usePagedList(apiGetComponents, { search, type: typeId }, { size: 12 });
+  const error = actionError || list.error;
+
+  const remove = async (c) => {
+    if (!window.confirm(`Удалить компонент «${c.name}»?`)) return;
+    setActionError('');
     try {
-      const params = {};
-      if (search) params.search = search;
-      if (typeId) params.type = typeId;
-      const { data } = await apiGetComponents(params);
-      setComponents(data);
+      await apiDeleteComponent(c.id);
+      await list.reload();
     } catch (e) {
-      setError(extractError(e, 'Не удалось загрузить компоненты'));
-    } finally {
-      setLoading(false);
+      setActionError(extractError(e, 'Не удалось удалить компонент'));
     }
   };
-
-  useEffect(() => {
-    const t = setTimeout(load, 250); // debounce поиска
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, typeId]);
 
   return (
     <div className="page">
@@ -42,6 +39,11 @@ export default function ComponentLibrary() {
           <h1 className="page__title">Библиотека компонентов</h1>
           <p className="page__subtitle">Пакеты и библиотеки с автоматическим разрешением зависимостей</p>
         </div>
+        {isAdmin && (
+          <button className="btn btn--primary" onClick={() => navigate('/editor/component')}>
+            + Компонент
+          </button>
+        )}
       </div>
 
       <div className="toolbar">
@@ -60,17 +62,24 @@ export default function ComponentLibrary() {
       </div>
 
       {error && <div className="alert alert--error">{error}</div>}
-      {loading ? (
+      {list.loading ? (
         <div className="empty">Загрузка…</div>
-      ) : components.length === 0 ? (
+      ) : list.items.length === 0 ? (
         <div className="empty">Ничего не найдено</div>
       ) : (
         <div className="grid">
-          {components.map((c) => (
-            <ComponentCard key={c.id} component={c} />
+          {list.items.map((c) => (
+            <ComponentCard
+              key={c.id}
+              component={c}
+              onEdit={isAdmin ? () => navigate(`/editor/component?id=${c.id}`) : undefined}
+              onDelete={isAdmin ? remove : undefined}
+            />
           ))}
         </div>
       )}
+      <Pagination page={list.page} totalPages={list.totalPages}
+                  totalElements={list.totalElements} onChange={list.setPage} />
     </div>
   );
 }

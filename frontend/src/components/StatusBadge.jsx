@@ -1,6 +1,6 @@
 import React from 'react';
 
-const LABELS = {
+export const LABELS = {
   CREATED: 'Создан',
   QUEUED: 'В очереди',
   BUILDING: 'Сборка',
