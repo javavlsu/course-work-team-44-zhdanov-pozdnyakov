@@ -4,6 +4,7 @@ import com.luckfox.imagebuilder.dto.AuthenticationRequest;
 import com.luckfox.imagebuilder.dto.AuthenticationResponse;
 import com.luckfox.imagebuilder.dto.RegisterRequest;
 import com.luckfox.imagebuilder.service.AuthenticationService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -28,8 +29,9 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<AuthenticationResponse> authenticate(
-            @RequestBody AuthenticationRequest request
+            @RequestBody AuthenticationRequest request,
+            HttpServletRequest httpRequest
     ) {
-        return ResponseEntity.ok(service.authenticate(request));
+        return ResponseEntity.ok(service.authenticate(request, httpRequest.getRemoteAddr()));
     }
 }

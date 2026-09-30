@@ -9,7 +9,11 @@ import lombok.AllArgsConstructor;
 import java.util.Set;
 
 @Entity
-@Table(name = "Component")
+// Индексы под сортировку каталога по названию и фильтр по типу с сортировкой по цене (DEF-23).
+@Table(name = "Component", indexes = {
+        @Index(name = "idx_component_name", columnList = "name, id"),
+        @Index(name = "idx_component_type_cost", columnList = "type, cost")
+})
 @Getter
 @Setter
 @NoArgsConstructor

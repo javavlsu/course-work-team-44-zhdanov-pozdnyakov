@@ -43,6 +43,22 @@ public class GlobalExceptionHandler {
                 .body(Map.of("error", "Операция нарушает связи между данными (запись используется в других объектах)"));
     }
 
+    @ExceptionHandler(TooManyRequestsException.class)
+    public ResponseEntity<Map<String, String>> handleTooManyRequests(TooManyRequestsException ex) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header("Retry-After", String.valueOf(ex.getRetryAfterSeconds()))
+                .body(Map.of("error", ex.getMessage()));
+    }
+
+    // Пул соединений исчерпан дольше connection-timeout — быстрый отказ вместо зависания запроса.
+    @ExceptionHandler(org.springframework.transaction.CannotCreateTransactionException.class)
+    public ResponseEntity<Map<String, String>> handleNoConnection(
+            org.springframework.transaction.CannotCreateTransactionException ex) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .header("Retry-After", "1")
+                .body(Map.of("error", "Сервис перегружен, повторите запрос позже"));
+    }
+
     @ExceptionHandler(org.springframework.orm.ObjectOptimisticLockingFailureException.class)
     public ResponseEntity<Map<String, String>> handleOptimisticLock(
             org.springframework.orm.ObjectOptimisticLockingFailureException ex) {

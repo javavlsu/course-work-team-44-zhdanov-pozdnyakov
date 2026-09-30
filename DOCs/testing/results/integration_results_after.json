@@ -1,0 +1,682 @@
+{
+ "run_id": "493ed2",
+ "finished": "2026-09-30 04:00:14",
+ "results": [
+  {
+   "id": "INT-01",
+   "stage": "1. Развёртывание",
+   "name": "Фронтенд (prod-сборка) отдаёт SPA и ассеты",
+   "description": "GET / и JS/CSS-бандлы из dist/ через server.mjs",
+   "expected": "200, text/html; бандлы 200 с корректным Content-Type",
+   "actual": "index-CTuQi8U5.js text/javascript; charset=utf-8 244 КБ; index-CYtgMNis.css text/css; charset=utf-8 8 КБ",
+   "status": "PASS",
+   "duration_s": 0.01,
+   "defect_id": ""
+  },
+  {
+   "id": "INT-02",
+   "stage": "1. Развёртывание",
+   "name": "Прямой переход по клиентскому маршруту (deep link)",
+   "description": "Обновление страницы на /editor/image и /admin/users",
+   "expected": "200 и index.html (SPA fallback)",
+   "actual": "/editor/image → 200, /admin/users → 200, /no/such/route → 200",
+   "status": "PASS",
+   "duration_s": 0.0,
+   "defect_id": ""
+  },
+  {
+   "id": "INT-03",
+   "stage": "1. Развёртывание",
+   "name": "Отдача несуществующего ассета",
+   "description": "GET /assets/missing.js (напр. после деплоя новой версии у клиента старый index.html)",
+   "expected": "404 для отсутствующего файла со статикой",
+   "actual": "HTTP 200, Content-Type text/html; charset=utf-8 — браузер получит HTML вместо JS",
+   "status": "FAIL",
+   "duration_s": 0.0,
+   "defect_id": "DEF-01"
+  },
+  {
+   "id": "INT-04",
+   "stage": "1. Развёртывание",
+   "name": "CORS: preflight с origin фронтенда",
+   "description": "OPTIONS /api/images/build с Origin http://localhost:5173",
+   "expected": "200, Access-Control-Allow-Origin = origin",
+   "actual": "HTTP 200, ACAO=http://localhost:5173",
+   "status": "PASS",
+   "duration_s": 0.01,
+   "defect_id": ""
+  },
+  {
+   "id": "INT-05",
+   "stage": "1. Развёртывание",
+   "name": "CORS: origin боевого домена",
+   "description": "OPTIONS с Origin https://builder.example.com (фронт на домене/другом порту)",
+   "expected": "Разрешённые origin задаются конфигурацией (переменной окружения)",
+   "actual": "HTTP 403 «Invalid CORS request» — фронт на любом другом адресе не сможет обращаться к API; origin изменить без пересборки нельзя",
+   "status": "FAIL",
+   "duration_s": 0.0,
+   "defect_id": "DEF-02"
+  },
+  {
+   "id": "INT-06",
+   "stage": "1. Развёртывание",
+   "name": "Схема БД создана Hibernate на чистой MySQL",
+   "description": "Проверка таблиц и ограничений в information_schema",
+   "expected": "Все таблицы есть, уникальный индекс на User.email",
+   "actual": "11 таблиц, уникальный индекс email есть",
+   "status": "PASS",
+   "duration_s": 0.02,
+   "defect_id": ""
+  },
+  {
+   "id": "INT-07",
+   "stage": "1. Развёртывание",
+   "name": "Начальное наполнение (DataSeeder) через конвейер сборки",
+   "description": "На чистой БД: каталог, администратор, стартовые образы проходят реальную очередь сборки",
+   "expected": "67 компонентов, 15 образов; все стартовые образы READY и скачиваемы",
+   "actual": "67 компонентов, 15/15 образов READY (очередь опустела за 44 с), вход admin OK",
+   "status": "PASS",
+   "duration_s": 43.96,
+   "defect_id": ""
+  },
+  {
+   "id": "INT-08",
+   "stage": "2. Аутентификация и доступ",
+   "name": "Регистрация и вход",
+   "description": "POST /auth/register, затем POST /auth/login и GET /users/me",
+   "expected": "200, JWT, профиль с ролью USER",
+   "actual": "токен выдан, /users/me → it-493ed2-c63904@test.io ['USER']",
+   "status": "PASS",
+   "duration_s": 0.22,
+   "defect_id": ""
+  },
+  {
+   "id": "INT-09",
+   "stage": "2. Аутентификация и доступ",
+   "name": "Валидация регистрации",
+   "description": "Слабый пароль, неверный email, пустое имя, дубликат email",
+   "expected": "400 с понятным сообщением для каждого случая",
+   "actual": "weak password→400, bad email→400, empty name→400, duplicate→400",
+   "status": "PASS",
+   "duration_s": 0.1,
+   "defect_id": ""
+  },
+  {
+   "id": "INT-10",
+   "stage": "2. Аутентификация и доступ",
+   "name": "Вход с неверным паролем / несуществующим email",
+   "description": "POST /auth/login с неверными учётными данными",
+   "expected": "401 Unauthorized с сообщением об ошибке",
+   "actual": "неверный пароль → HTTP 403 «»; нет пользователя → HTTP 403",
+   "status": "FAIL",
+   "duration_s": 0.13,
+   "defect_id": "DEF-03"
+  },
+  {
+   "id": "INT-48",
+   "stage": "2. Аутентификация и доступ",
+   "name": "Защита от перебора паролей",
+   "description": "Новый пользователь; 7 входов с неверным паролем подряд, затем вход с верным паролем; вход другого пользователя с того же адреса",
+   "expected": "После 5 неудач — 429 с Retry-After (и для верного пароля до конца окна); другие пользователи входят",
+   "actual": "попытки [403, 403, 403, 403, 403, 429, 429]; верный пароль в окне блокировки → 429, Retry-After 300 с; другой пользователь вошёл",
+   "status": "PASS",
+   "duration_s": 0.56,
+   "defect_id": ""
+  },
+  {
+   "id": "INT-11",
+   "stage": "2. Аутентификация и доступ",
+   "name": "Доступ к защищённым ресурсам без токена",
+   "description": "GET /users/me, POST /images/build без Authorization",
+   "expected": "401 (фронтенд перенаправляет на вход только по 401)",
+   "actual": "/users/me → 403, /images/build → 403",
+   "status": "FAIL",
+   "duration_s": 0.01,
+   "defect_id": "DEF-04"
+  },
+  {
+   "id": "INT-12",
+   "stage": "2. Аутентификация и доступ",
+   "name": "Повреждённый и чужой по подписи токен",
+   "description": "Authorization: Bearer <мусор>; токен, подписанный другим ключом",
+   "expected": "401, без 500 и стектрейсов",
+   "actual": "коды: {'мусор': 403, 'чужая подпись': 403}",
+   "status": "FAIL",
+   "duration_s": 0.02,
+   "defect_id": "DEF-05"
+  },
+  {
+   "id": "INT-13",
+   "stage": "2. Аутентификация и доступ",
+   "name": "Просроченный токен",
+   "description": "Токен с exp в прошлом (подписан ключом приложения)",
+   "expected": "401 → фронтенд отправляет на вход",
+   "actual": "HTTP 403 (ExpiredJwtException не обработано)",
+   "status": "FAIL",
+   "duration_s": 0.01,
+   "defect_id": "DEF-05"
+  },
+  {
+   "id": "INT-14",
+   "stage": "2. Аутентификация и доступ",
+   "name": "Время жизни JWT",
+   "description": "Декодирование выданного токена: exp - iat",
+   "expected": "24 часа (так указано в коде/документации)",
+   "actual": "4.0 ч",
+   "status": "FAIL",
+   "duration_s": 0.07,
+   "defect_id": "DEF-06"
+  },
+  {
+   "id": "INT-15",
+   "stage": "2. Аутентификация и доступ",
+   "name": "Ключ подписи JWT в исходном коде",
+   "description": "Токен, подписанный ключом из репозитория, принимается сервером",
+   "expected": "Ключ берётся из секрета окружения; такой токен отклоняется",
+   "actual": "GET /users (ADMIN) с токеном из известного ключа → HTTP 200",
+   "status": "FAIL",
+   "duration_s": 0.05,
+   "defect_id": "DEF-07"
+  },
+  {
+   "id": "INT-16",
+   "stage": "2. Аутентификация и доступ",
+   "name": "Разграничение ролей USER / ADMIN",
+   "description": "USER вызывает админские операции: GET /users, POST /components, PUT/DELETE /images/{id}",
+   "expected": "403 для всех",
+   "actual": "GET /users→403, POST /components→403, PUT /images→403, DELETE /images→403, DELETE /users/1→403",
+   "status": "PASS",
+   "duration_s": 0.17,
+   "defect_id": ""
+  },
+  {
+   "id": "INT-17",
+   "stage": "2. Аутентификация и доступ",
+   "name": "Токен удалённого пользователя",
+   "description": "Админ удаляет пользователя, тот продолжает запрос со старым токеном",
+   "expected": "401",
+   "actual": "HTTP 403",
+   "status": "FAIL",
+   "duration_s": 0.19,
+   "defect_id": "DEF-08"
+  },
+  {
+   "id": "INT-18",
+   "stage": "2. Аутентификация и доступ",
+   "name": "Гонка: одновременная регистрация одного email",
+   "description": "20 параллельных POST /auth/register с одинаковым email",
+   "expected": "Ровно 1 успех, остальные 400/409, дублей в БД нет, 5xx нет",
+   "actual": "коды {200: 1, 409: 19}, строк в БД 1",
+   "status": "PASS",
+   "duration_s": 0.22,
+   "defect_id": ""
+  },
+  {
+   "id": "INT-19",
+   "stage": "3. Каталог и пагинация",
+   "name": "Пагинация: граничные значения",
+   "description": "size=1000, size=0, page=-1, page за пределами",
+   "expected": "size обрезается до 100, page<0 → 0, пустая страница за пределами",
+   "actual": "size 1000→100, 0→1, page -1→0, page 999 → пусто",
+   "status": "PASS",
+   "duration_s": 0.04,
+   "defect_id": ""
+  },
+  {
+   "id": "INT-20",
+   "stage": "3. Каталог и пагинация",
+   "name": "Нечисловые параметры (анонимный пользователь)",
+   "description": "GET /components?page=abc, GET /images?components=x, GET /components/abc",
+   "expected": "400 Bad Request",
+   "actual": "{'page=abc': 403, 'components=x': 403, '/components/abc': 403}",
+   "status": "FAIL",
+   "duration_s": 0.01,
+   "defect_id": "DEF-10"
+  },
+  {
+   "id": "INT-21",
+   "stage": "3. Каталог и пагинация",
+   "name": "Спецсимволы и инъекции в поиске",
+   "description": "search = ', \", ' OR 1=1 --, %, _, <script>",
+   "expected": "Нет 5xx; спецсимволы трактуются буквально (% и _ не шаблоны)",
+   "actual": "инъекции нет (параметризованные запросы), но wildcard: найдено {\"'\": 0, '\"': 0, \"' OR 1=1 --\": 0, '<script>': 0, '%': 67, '_': 67}",
+   "status": "FAIL",
+   "duration_s": 0.04,
+   "defect_id": "DEF-11"
+  },
+  {
+   "id": "INT-22",
+   "stage": "3. Каталог и пагинация",
+   "name": "Комбинация поиска, типа, сортировки и страниц",
+   "description": "Сквозной проход всех страниц с search+type+sort=price_desc",
+   "expected": "Без дублей и пропусков, порядок по цене сохраняется между страницами",
+   "actual": "30 записей на 5 стр., дублей нет",
+   "status": "PASS",
+   "duration_s": 0.04,
+   "defect_id": ""
+  },
+  {
+   "id": "INT-23",
+   "stage": "3. Каталог и пагинация",
+   "name": "Число SQL-запросов на одну страницу образов",
+   "description": "Дельта счётчика Questions MySQL вокруг GET /images?size=12",
+   "expected": "≤ 10 запросов (без проблемы N+1)",
+   "actual": "9 / 9",
+   "status": "PASS",
+   "duration_s": 0.06,
+   "defect_id": ""
+  },
+  {
+   "id": "INT-24",
+   "stage": "4. Компоненты (ADMIN)",
+   "name": "Создание компонента с зависимостями и чтение",
+   "description": "POST /components с dependencyIds, GET /components/{id}",
+   "expected": "201/200, зависимости сохранены",
+   "actual": "HTTP 200, id=68, deps=[1]",
+   "status": "PASS",
+   "duration_s": 0.1,
+   "defect_id": ""
+  },
+  {
+   "id": "INT-25",
+   "stage": "4. Компоненты (ADMIN)",
+   "name": "Защита графа зависимостей",
+   "description": "Зависимость на себя; цикл A→B→A через PUT",
+   "expected": "400 в обоих случаях, граф не меняется",
+   "actual": "self→400, cycle→400",
+   "status": "PASS",
+   "duration_s": 0.13,
+   "defect_id": ""
+  },
+  {
+   "id": "INT-26",
+   "stage": "4. Компоненты (ADMIN)",
+   "name": "Удаление используемого и свободного компонента",
+   "description": "DELETE компонента, входящего в образ; DELETE свободного",
+   "expected": "400 с сообщением; 204",
+   "actual": "used→400 «Компонент «numpy» входит в образы — сначала измени», free→204, затем GET→404",
+   "status": "PASS",
+   "duration_s": 0.13,
+   "defect_id": ""
+  },
+  {
+   "id": "INT-27",
+   "stage": "4. Компоненты (ADMIN)",
+   "name": "Валидация полей компонента",
+   "description": "Пустое имя; отрицательная цена; имя 300 символов; несуществующий тип",
+   "expected": "400 для некорректных полей (404 допустим для несуществующего типа)",
+   "actual": "{'empty name': 400, 'negative cost': 400, 'name 300': 409, 'bad type': 404}",
+   "status": "FAIL",
+   "duration_s": 0.11,
+   "defect_id": "DEF-13"
+  },
+  {
+   "id": "INT-28",
+   "stage": "4. Компоненты (ADMIN)",
+   "name": "Параллельное редактирование компонента двумя админами",
+   "description": "10 одновременных PUT одного компонента с разными ценами",
+   "expected": "Без 5xx; итог — одно из отправленных значений",
+   "actual": "коды {200: 1, 409: 9}, итоговая цена 103: оптимистичная блокировка (@Version) отсекла конкурентные записи",
+   "status": "PASS",
+   "duration_s": 0.12,
+   "defect_id": ""
+  },
+  {
+   "id": "INT-29",
+   "stage": "5. Заказ и сборка образа",
+   "name": "Заказ сборки с разрешением транзитивных зависимостей",
+   "description": "USER заказывает образ [opencv-python]",
+   "expected": "202, QUEUED, в составе numpy и python3, цена = сумма компонентов",
+   "actual": "HTTP 202, state=QUEUED, состав=['numpy', 'opencv-python', 'python3'], cost=160",
+   "status": "PASS",
+   "duration_s": 0.13,
+   "defect_id": ""
+  },
+  {
+   "id": "INT-30",
+   "stage": "5. Заказ и сборка образа",
+   "name": "Сборка до READY и появление в «Мои образы»",
+   "description": "Опрос GET /images/{id} до финального статуса",
+   "expected": "READY, downloadable=true, образ в /users/me/images",
+   "actual": "READY за 3.6 с",
+   "status": "PASS",
+   "duration_s": 3.59,
+   "defect_id": ""
+  },
+  {
+   "id": "INT-31",
+   "stage": "5. Заказ и сборка образа",
+   "name": "Скачивание артефакта и проверка содержимого",
+   "description": "GET /images/{id}/download владельцем; проверка ext4 и манифеста внутри образа",
+   "expected": "200, octet-stream, валидный ext4 (магия 0xEF53), размер 16+N МБ, манифест — валидный JSON с составом",
+   "actual": "ext4 OK, 19 МБ, пакеты ['numpy', 'opencv-python', 'python3'], манифест: IT Образ «Тест» 493ed2",
+   "status": "PASS",
+   "duration_s": 13.96,
+   "defect_id": ""
+  },
+  {
+   "id": "INT-32",
+   "stage": "5. Заказ и сборка образа",
+   "name": "Имя файла при скачивании (кириллица)",
+   "description": "Заголовок Content-Disposition для образа «Образ для камеры»",
+   "expected": "Корректное имя файла (filename*=UTF-8''… по RFC 6266)",
+   "actual": "HTTP 200, заголовок Content-Disposition отсутствует (Tomcat отбросил значение с не-Latin-1 символами) — браузер сохранит файл как «download»",
+   "status": "FAIL",
+   "duration_s": 3.62,
+   "defect_id": "DEF-15"
+  },
+  {
+   "id": "INT-33",
+   "stage": "5. Заказ и сборка образа",
+   "name": "Скачивание чужого образа",
+   "description": "Другой USER скачивает образ первого пользователя",
+   "expected": "403 (скачивать может владелец или ADMIN)",
+   "actual": "HTTP 200, получено 19 МБ чужого образа",
+   "status": "FAIL",
+   "duration_s": 0.15,
+   "defect_id": "DEF-16"
+  },
+  {
+   "id": "INT-34",
+   "stage": "5. Заказ и сборка образа",
+   "name": "Скачивание без токена и неготового образа",
+   "description": "GET /download анонимно; GET /download для QUEUED",
+   "expected": "401; 400 «не готов»",
+   "actual": "аноним → HTTP 403; неготовый → 400",
+   "status": "FAIL",
+   "duration_s": 0.04,
+   "defect_id": "DEF-04"
+  },
+  {
+   "id": "INT-35",
+   "stage": "5. Заказ и сборка образа",
+   "name": "Валидация заказа",
+   "description": "Пустой список компонентов; несуществующий компонент; пустое имя",
+   "expected": "400/404 без 5xx",
+   "actual": "{'empty components': 400, 'unknown component': 404, 'empty name': 400}",
+   "status": "PASS",
+   "duration_s": 0.1,
+   "defect_id": ""
+  },
+  {
+   "id": "INT-36",
+   "stage": "5. Заказ и сборка образа",
+   "name": "Очередь сборок: один воркер, FIFO",
+   "description": "6 последовательных заказов + 6 одновременных от разных пользователей; мониторинг статусов каждые 0,3 с",
+   "expected": "Одновременно BUILDING не более 1; последовательные заказы завершаются в порядке заказа; все READY",
+   "actual": "max BUILDING=1, FIFO соблюдён, 12 сборок за 35.6 с (3.0 с/сборку); одновременные заказы выполняются в порядке фиксации транзакций, а не id: [25, 26, 30, 28, 29, 27]",
+   "status": "PASS",
+   "duration_s": 39.25,
+   "defect_id": ""
+  },
+  {
+   "id": "INT-37",
+   "stage": "5. Заказ и сборка образа",
+   "name": "Изменение образа администратором с пересборкой",
+   "description": "PUT /images/{id} READY-образа (другой состав); проверка нового артефакта",
+   "expected": "202 → QUEUED → READY; новый состав в артефакте; старый файл заменён",
+   "actual": "202, пересобран за 3.2 с, состав ['glibc', 'openssh'], cost 60; PUT во время сборки → 400",
+   "status": "PASS",
+   "duration_s": 3.33,
+   "defect_id": ""
+  },
+  {
+   "id": "INT-38",
+   "stage": "5. Заказ и сборка образа",
+   "name": "Удаление образа администратором",
+   "description": "DELETE /images/{id}: запись, связь с пользователем и файл артефакта",
+   "expected": "204; GET → 404; файл удалён с диска; пропал из «Мои образы»",
+   "actual": "204, 404, файл удалён, связь с пользователем снята",
+   "status": "PASS",
+   "duration_s": 0.62,
+   "defect_id": ""
+  },
+  {
+   "id": "INT-39",
+   "stage": "5. Заказ и сборка образа",
+   "name": "Удаление пользователя, у которого есть образы",
+   "description": "Админ удаляет пользователя с заказанными образами",
+   "expected": "204; образы остаются в библиотеке",
+   "actual": "204, образ сохранён",
+   "status": "PASS",
+   "duration_s": 0.21,
+   "defect_id": ""
+  },
+  {
+   "id": "INT-40",
+   "stage": "5. Заказ и сборка образа",
+   "name": "Артефакт удалён с диска вне приложения",
+   "description": "Файл .img удаляется на сервере, затем GET /images/{id} и /download",
+   "expected": "downloadable=false либо понятная ошибка; без 5xx",
+   "actual": "downloadable=True, download → HTTP 400 {\"error\":\"Файл артефакта не найден на сервере\"}",
+   "status": "FAIL",
+   "duration_s": 3.92,
+   "defect_id": "DEF-17"
+  },
+  {
+   "id": "INT-41",
+   "stage": "6. Управление пользователями",
+   "name": "CRUD пользователей администратором",
+   "description": "POST → GET → PUT (роль ADMIN, пароль) → вход с новым паролем → DELETE",
+   "expected": "201/200 на каждом шаге, новые права действуют",
+   "actual": "создан, повышен до ADMIN, вход с новым паролем, поиск+фильтр, удалён",
+   "status": "PASS",
+   "duration_s": 0.32,
+   "defect_id": ""
+  },
+  {
+   "id": "INT-42",
+   "stage": "6. Управление пользователями",
+   "name": "Защита от самоблокировки администратора",
+   "description": "Админ удаляет себя; снимает с себя роль ADMIN",
+   "expected": "400 в обоих случаях",
+   "actual": "400 / 400",
+   "status": "PASS",
+   "duration_s": 0.09,
+   "defect_id": ""
+  },
+  {
+   "id": "INT-43",
+   "stage": "6. Управление пользователями",
+   "name": "Смена email администратором самому себе",
+   "description": "Админ меняет свой email через PUT /users/{id}",
+   "expected": "Сессия продолжает работать (или выдаётся новый токен)",
+   "actual": "PUT → 200, затем /users/me со старым токеном → 403",
+   "status": "FAIL",
+   "duration_s": 0.18,
+   "defect_id": "DEF-18"
+  },
+  {
+   "id": "INT-44",
+   "stage": "7. Отказоустойчивость",
+   "name": "Перезапуск backend: сохранность данных",
+   "description": "Graceful-остановка (SIGTERM) и запуск jar; повторный старт DataSeeder",
+   "expected": "Данные сохранены, дублей каталога нет, токен остаётся валидным",
+   "actual": "компонентов/образов (71, 31) = до рестарта; простой 9 с; токен валиден",
+   "status": "PASS",
+   "duration_s": 9.12,
+   "defect_id": ""
+  },
+  {
+   "id": "INT-45",
+   "stage": "7. Отказоустойчивость",
+   "name": "Падение backend (kill -9) во время сборки",
+   "description": "3 заказа в очереди, kill -9 в момент BUILDING, запуск backend",
+   "expected": "Прерванные сборки возобновляются или помечаются FAILED; их можно пересобрать/удалить",
+   "actual": "через 15 с после рестарта статусы {33: 'BUILDING', 34: 'QUEUED', 35: 'QUEUED'}; попытки PUT/DELETE зависших: {33: (400, 400), 34: (400, 204), 35: (400, 204)}",
+   "status": "FAIL",
+   "duration_s": 23.19,
+   "defect_id": "DEF-19"
+  },
+  {
+   "id": "INT-46",
+   "stage": "7. Отказоустойчивость",
+   "name": "Недоступность БД",
+   "description": "Остановка MySQL; запросы к API; запуск MySQL; повтор запросов без рестарта backend",
+   "expected": "Во время сбоя — быстрый 5xx (≤ 5 с) без утечки деталей; после восстановления — 200 без рестарта",
+   "actual": "503 за 3.0 с; восстановление 1.0 с",
+   "status": "PASS",
+   "duration_s": 10.72,
+   "defect_id": ""
+  },
+  {
+   "id": "INT-47",
+   "stage": "7. Отказоустойчивость",
+   "name": "Состояние стенда после всех тестов",
+   "description": "Ошибки в логе backend (ERROR/Exception), итоговые проверки API",
+   "expected": "API отвечает, очередь пуста",
+   "actual": "API отвечает",
+   "status": "PASS",
+   "duration_s": 0.01,
+   "defect_id": ""
+  }
+ ],
+ "defects": [
+  {
+   "id": "DEF-01",
+   "severity": "Низкая",
+   "title": "server.mjs отдаёт index.html со статусом 200 вместо 404 для отсутствующих /assets/*",
+   "recommendation": "Для путей с расширением файла возвращать 404; SPA-fallback только для маршрутов без расширения",
+   "tests": [
+    "INT-03"
+   ]
+  },
+  {
+   "id": "DEF-02",
+   "severity": "Средняя",
+   "title": "Разрешённый CORS-origin захардкожен (http://localhost:5173) в WebConfig",
+   "recommendation": "Вынести список origin в application.properties/переменную окружения (CORS_ALLOWED_ORIGINS)",
+   "tests": [
+    "INT-05"
+   ]
+  },
+  {
+   "id": "DEF-03",
+   "severity": "Средняя",
+   "title": "Неверный логин/пароль возвращает 403 без тела вместо 401",
+   "recommendation": "Обрабатывать AuthenticationException в GlobalExceptionHandler (401 + сообщение); разрешить /error в SecurityConfig",
+   "tests": [
+    "INT-10"
+   ]
+  },
+  {
+   "id": "DEF-04",
+   "severity": "Средняя",
+   "title": "Запрос без токена/с недействительным токеном получает 403 вместо 401 — фронтенд (interceptor по 401) не выкидывает пользователя на страницу входа",
+   "recommendation": "Настроить authenticationEntryPoint (HttpStatusEntryPoint(UNAUTHORIZED)) в SecurityConfig",
+   "tests": [
+    "INT-11",
+    "INT-34"
+   ]
+  },
+  {
+   "id": "DEF-05",
+   "severity": "Высокая",
+   "title": "Некорректный/поддельный/просроченный JWT приводит к исключению в JwtAuthenticationFilter (ответ 403/500 вместо 401), в лог пишется стектрейс",
+   "recommendation": "Оборачивать разбор JWT в try/catch (JwtException) и продолжать цепочку как аноним → 401",
+   "tests": [
+    "INT-12",
+    "INT-13"
+   ]
+  },
+  {
+   "id": "DEF-06",
+   "severity": "Низкая",
+   "title": "Срок жизни JWT 4 ч вместо заявленных 24 ч (1000*60*24*10 мс)",
+   "recommendation": "Исправить на 1000L*60*60*24 и вынести в конфигурацию (jwt.expiration)",
+   "tests": [
+    "INT-14"
+   ]
+  },
+  {
+   "id": "DEF-07",
+   "severity": "Критическая",
+   "title": "Секрет JWT захардкожен в JwtService и лежит в Git: любой, кто видел репозиторий, может выпустить токен администратора",
+   "recommendation": "Читать секрет из переменной окружения/секрета, сгенерировать новый, старый считать скомпрометированным",
+   "tests": [
+    "INT-15"
+   ]
+  },
+  {
+   "id": "DEF-08",
+   "severity": "Средняя",
+   "title": "Запрос с токеном удалённого пользователя: UsernameNotFoundException в фильтре → 403/500",
+   "recommendation": "Ловить UsernameNotFoundException в JwtAuthenticationFilter и отвечать 401",
+   "tests": [
+    "INT-17"
+   ]
+  },
+  {
+   "id": "DEF-10",
+   "severity": "Средняя",
+   "title": "Ошибки разбора параметров у анонимного пользователя возвращают 403 вместо 400 (ошибка уходит на /error, закрытый Spring Security)",
+   "recommendation": "Разрешить /error в SecurityConfig (permitAll) и обработать MethodArgumentTypeMismatchException → 400",
+   "tests": [
+    "INT-20"
+   ]
+  },
+  {
+   "id": "DEF-11",
+   "severity": "Низкая",
+   "title": "Символы % и _ в поиске не экранируются и работают как шаблоны LIKE (поиск «%» возвращает весь каталог)",
+   "recommendation": "Экранировать % и _ (cb.like(..., escapeChar))",
+   "tests": [
+    "INT-21"
+   ]
+  },
+  {
+   "id": "DEF-13",
+   "severity": "Низкая",
+   "title": "Имя компонента длиннее 255 символов даёт 409 с вводящим в заблуждение сообщением «запись используется в других объектах» вместо 400 валидации",
+   "recommendation": "@Size(max=255) на name в ComponentRequest/BuildRequest/UserRequest",
+   "tests": [
+    "INT-27"
+   ]
+  },
+  {
+   "id": "DEF-15",
+   "severity": "Средняя",
+   "title": "Для образов с кириллическим названием заголовок Content-Disposition теряется — файл скачивается без имени и расширения .img",
+   "recommendation": "ContentDisposition.attachment().filename(name, UTF_8) из Spring",
+   "tests": [
+    "INT-32"
+   ]
+  },
+  {
+   "id": "DEF-16",
+   "severity": "Высокая",
+   "title": "Нет проверки владельца при скачивании: любой авторизованный пользователь скачивает чужие образы по id (IDOR)",
+   "recommendation": "В download проверять, что образ в orderedImages текущего пользователя или роль ADMIN",
+   "tests": [
+    "INT-33"
+   ]
+  },
+  {
+   "id": "DEF-17",
+   "severity": "Низкая",
+   "title": "Если файл артефакта пропал с диска, карточка продолжает показывать «Скачать» (downloadable=true), а скачивание даёт 400",
+   "recommendation": "Проверять существование файла при формировании downloadable или помечать образ FAILED/переводить в пересборку",
+   "tests": [
+    "INT-40"
+   ]
+  },
+  {
+   "id": "DEF-18",
+   "severity": "Низкая",
+   "title": "После смены собственного email старый JWT (sub=старый email) перестаёт работать — админ внезапно получает ошибки вместо перелогина",
+   "recommendation": "Возвращать новый токен после смены email или запрещать смену своего email",
+   "tests": [
+    "INT-43"
+   ]
+  },
+  {
+   "id": "DEF-19",
+   "severity": "Высокая",
+   "title": "Очередь сборок живёт только в памяти: после перезапуска/падения backend образы навсегда остаются QUEUED/BUILDING, их нельзя ни изменить, ни удалить (BUILDING), пользователь никогда не получит образ",
+   "recommendation": "При старте переводить BUILDING→FAILED и заново ставить QUEUED в очередь (ApplicationReadyEvent); либо хранить очередь в БД",
+   "tests": [
+    "INT-45"
+   ]
+  }
+ ]
+}

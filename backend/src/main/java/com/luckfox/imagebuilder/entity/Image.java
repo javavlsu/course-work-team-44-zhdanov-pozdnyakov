@@ -9,7 +9,11 @@ import lombok.AllArgsConstructor;
 import java.util.Set;
 
 @Entity
-@Table(name = "Image")
+// Индексы под фильтр по статусу и сортировку по цене в библиотеке (DEF-23).
+@Table(name = "Image", indexes = {
+        @Index(name = "idx_image_state_cost", columnList = "state, cost"),
+        @Index(name = "idx_image_cost", columnList = "cost")
+})
 @Getter
 @Setter
 @NoArgsConstructor
