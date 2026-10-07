@@ -1,0 +1,58 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: luckfox_db
+    restart: always
+    environment:
+      MYSQL_DATABASE: luckfox_db
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      # Рантайм-схему создаёт Hibernate (ddl-auto=update). Документная модель —
+      # DOCs/этап3/java_working.sql (не монтируется, чтобы не конфликтовать типами
+      # BIGINT UNSIGNED ↔ BIGINT и FK с генерируемой схемой).
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    container_name: image_builder_backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/luckfox_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      # Тулчейн и каталог вывода внутри контейнера (см. volumes ниже).
+      LUCKFOX_BUILD_SCRIPT: /workspace/scripts/luckfox_build.sh
+      LUCKFOX_OUTPUT_DIR: /workspace/output/images
+      LUCKFOX_SDK_DIR: /workspace/luckfox-pico
+      # Имитация длительности сборки (сек) — для наглядной демонстрации очереди. 0 = выкл.
+      LUCKFOX_SIM_DELAY: ${LUCKFOX_SIM_DELAY:-0}
+    volumes:
+      - ./scripts:/workspace/scripts:ro
+      - ./luckfox-pico:/workspace/luckfox-pico:ro
+      - build_output:/workspace/output
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:8080/api
+    container_name: image_builder_frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:
+  build_output:

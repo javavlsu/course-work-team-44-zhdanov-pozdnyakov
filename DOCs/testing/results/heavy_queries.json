@@ -1,0 +1,276 @@
+{
+ "base": [
+  {
+   "name": "Образы: первая страница (12)",
+   "path": "/images",
+   "params": {
+    "size": 12
+   },
+   "status": 200,
+   "total": 388,
+   "sql": 28,
+   "bytes": 9325,
+   "med": 9.6,
+   "p95": 10.5,
+   "max": 12.3
+  },
+  {
+   "name": "Образы: страница 100 макс. размера",
+   "path": "/images",
+   "params": {
+    "size": 100
+   },
+   "status": 200,
+   "total": 388,
+   "sql": 116,
+   "bytes": 70672,
+   "med": 35.8,
+   "p95": 44.2,
+   "max": 44.4
+  },
+  {
+   "name": "Образы: глубокая страница (page=1500)",
+   "path": "/images",
+   "params": {
+    "page": 1500,
+    "size": 12
+   },
+   "status": 200,
+   "total": 388,
+   "sql": 9,
+   "bytes": 72,
+   "med": 3.4,
+   "p95": 3.9,
+   "max": 4.3
+  },
+  {
+   "name": "Образы: поиск по подстроке",
+   "path": "/images",
+   "params": {
+    "search": "image-199",
+    "size": 12
+   },
+   "status": 200,
+   "total": 0,
+   "sql": 8,
+   "bytes": 66,
+   "med": 2.5,
+   "p95": 3.1,
+   "max": 3.2
+  },
+  {
+   "name": "Образы: фильтр по 2 компонентам",
+   "path": "/images",
+   "params": {
+    "components": "1,2",
+    "size": 12
+   },
+   "status": 200,
+   "total": 134,
+   "sql": 28,
+   "bytes": 10316,
+   "med": 9.5,
+   "p95": 10.4,
+   "max": 11.0
+  },
+  {
+   "name": "Образы: сортировка по цене ↓ + статус",
+   "path": "/images",
+   "params": {
+    "sort": "price_desc",
+    "state": "READY",
+    "size": 12
+   },
+   "status": 200,
+   "total": 387,
+   "sql": 27,
+   "bytes": 13852,
+   "med": 8.8,
+   "p95": 9.6,
+   "max": 10.3
+  },
+  {
+   "name": "Компоненты: первая страница",
+   "path": "/components",
+   "params": {
+    "size": 12
+   },
+   "status": 200,
+   "total": 71,
+   "sql": 23,
+   "bytes": 2066,
+   "med": 6.1,
+   "p95": 6.7,
+   "max": 7.9
+  },
+  {
+   "name": "Компоненты: поиск + тип + цена ↑",
+   "path": "/components",
+   "params": {
+    "search": "comp-1",
+    "type": 1,
+    "sort": "price_asc",
+    "size": 12
+   },
+   "status": 200,
+   "total": 0,
+   "sql": 8,
+   "bytes": 66,
+   "med": 2.3,
+   "p95": 2.6,
+   "max": 2.9
+  },
+  {
+   "name": "Пользователи (ADMIN): поиск",
+   "path": "/users",
+   "params": {
+    "search": "user-4",
+    "size": 20
+   },
+   "status": 200,
+   "total": 0,
+   "sql": 10,
+   "bytes": 66,
+   "med": 4.2,
+   "p95": 5.0,
+   "max": 5.6
+  }
+ ],
+ "volume": [
+  {
+   "name": "Образы: первая страница (12)",
+   "path": "/images",
+   "params": {
+    "size": 12
+   },
+   "status": 200,
+   "total": 20388,
+   "sql": 56,
+   "bytes": 9184,
+   "med": 16.7,
+   "p95": 17.9,
+   "max": 18.4
+  },
+  {
+   "name": "Образы: страница 100 макс. размера",
+   "path": "/images",
+   "params": {
+    "size": 100
+   },
+   "status": 200,
+   "total": 20388,
+   "sql": 389,
+   "bytes": 77331,
+   "med": 89.6,
+   "p95": 102.8,
+   "max": 106.2
+  },
+  {
+   "name": "Образы: глубокая страница (page=1500)",
+   "path": "/images",
+   "params": {
+    "page": 1500,
+    "size": 12
+   },
+   "status": 200,
+   "total": 20388,
+   "sql": 57,
+   "bytes": 9223,
+   "med": 25.6,
+   "p95": 26.9,
+   "max": 28.0
+  },
+  {
+   "name": "Образы: поиск по подстроке",
+   "path": "/images",
+   "params": {
+    "search": "image-199",
+    "size": 12
+   },
+   "status": 200,
+   "total": 111,
+   "sql": 56,
+   "bytes": 9185,
+   "med": 25.7,
+   "p95": 32.8,
+   "max": 42.3
+  },
+  {
+   "name": "Образы: фильтр по 2 компонентам",
+   "path": "/images",
+   "params": {
+    "components": "1,2",
+    "size": 12
+   },
+   "status": 200,
+   "total": 134,
+   "sql": 28,
+   "bytes": 10316,
+   "med": 9.9,
+   "p95": 10.4,
+   "max": 11.1
+  },
+  {
+   "name": "Образы: сортировка по цене ↓ + статус",
+   "path": "/images",
+   "params": {
+    "sort": "price_desc",
+    "state": "READY",
+    "size": 12
+   },
+   "status": 200,
+   "total": 18387,
+   "sql": 57,
+   "bytes": 9388,
+   "med": 33.6,
+   "p95": 35.7,
+   "max": 38.2
+  },
+  {
+   "name": "Компоненты: первая страница",
+   "path": "/components",
+   "params": {
+    "size": 12
+   },
+   "status": 200,
+   "total": 2071,
+   "sql": 23,
+   "bytes": 2070,
+   "med": 6.8,
+   "p95": 7.4,
+   "max": 8.1
+  },
+  {
+   "name": "Компоненты: поиск + тип + цена ↑",
+   "path": "/components",
+   "params": {
+    "search": "comp-1",
+    "type": 1,
+    "sort": "price_asc",
+    "size": 12
+   },
+   "status": 200,
+   "total": 555,
+   "sql": 22,
+   "bytes": 2250,
+   "med": 8.0,
+   "p95": 10.4,
+   "max": 15.3
+  },
+  {
+   "name": "Пользователи (ADMIN): поиск",
+   "path": "/users",
+   "params": {
+    "search": "user-4",
+    "size": 20
+   },
+   "status": 200,
+   "total": 1111,
+   "sql": 31,
+   "bytes": 2545,
+   "med": 13.0,
+   "p95": 14.8,
+   "max": 15.8
+  }
+ ]
+}

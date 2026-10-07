@@ -1,0 +1,18 @@
+# Multi-stage сборка (для сред с рабочим DNS внутри docker build).
+# Build stage
+FROM node:18-slim AS build
+WORKDIR /app
+ARG VITE_API_URL=http://localhost:8080/api
+ENV VITE_API_URL=$VITE_API_URL
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+
+# Run stage
+FROM node:18-slim
+WORKDIR /app
+COPY --from=build /app/dist ./dist
+COPY server.mjs ./
+EXPOSE 5173
+CMD ["node", "server.mjs"]

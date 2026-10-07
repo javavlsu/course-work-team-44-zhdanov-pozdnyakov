@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+	<script defer src="./injectScript.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="utf-8" />
+    <title>Создать образ</title>
+    <link rel="stylesheet" href="globals.css" />
+    <link rel="stylesheet" href="styleguide.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="screen" data-model-id="6:1806">
+      <header class="rectangle" role="banner">
+        <nav class="navigation-pill-list" role="navigation" aria-label="Основная навигация">
+          <a href="#" class="navigation-pill" aria-label="Библиотека образов">
+            <span class="title">Библиотека образов</span>
+          </a>
+          <a href="#" class="navigation-pill" aria-label="Библиотека компонентов">
+            <span class="title">Библиотека компонентов</span>
+          </a>
+          <a href="#" class="title-wrapper" aria-current="page" aria-label="Создать образ">
+            <span class="title-2">Создать образ</span>
+          </a>
+          <a href="#" class="navigation-pill" aria-label="Аккаунт">
+            <span class="title">Аккаунт</span>
+          </a>
+        </nav>
+        <button class="navigation-button" type="button" aria-label="Выйти из системы">
+          <img class="log-out" src="https://c.animaapp.com/VVyY6BpD/img/log-out-1.svg" alt="" role="presentation" />
+          <span class="label">Выйти</span>
+        </button>
+      </header>
+      <main>
+        <section class="form-shipping" aria-labelledby="form-heading">
+          <fieldset class="legend">
+            <legend id="form-heading" class="text-wrapper">Создать образ</legend>
+            <span class="text"></span>
+          </fieldset>
+          <div class="div">
+            <label for="image-name" class="label-2">Название</label>
+            <input
+              class="input"
+              id="image-name"
+              placeholder="name"
+              type="text"
+              name="name"
+              required
+              aria-required="true"
+            />
+          </div>
+          <div class="div">
+            <label for="base-distro" class="label-2">Базовый дистрибутив</label>
+            <select class="select" id="base-distro" name="distro" required aria-required="true">
+              <option value="ubuntu" selected>ubuntu</option>
+            </select>
+          </div>
+          <div class="div">
+            <label for="description" class="label-2">Описание</label>
+            <textarea
+              class="textarea"
+              id="description"
+              name="description"
+              placeholder="описание"
+              rows="4"
+              aria-label="Описание образа"
+            ></textarea>
+          </div>
+        </section>
+        <section aria-labelledby="dependencies-heading">
+          <h2 id="dependencies-heading" class="text-strong">
+            <span class="text-strong-2">Зависимости</span>
+          </h2>
+          <div class="cards-2" role="list" aria-label="Список зависимостей">
+            <article class="card-2" role="listitem">
+              <div class="body-2">
+                <div class="button-group">
+                  <h3 class="title-3">Python</h3>
+                  <button class="button" type="button" aria-label="Удалить зависимость Python">
+                    <span class="button-2">удалить зависимость</span>
+                  </button>
+                </div>
+              </div>
+            </article>
+            <article class="card-2" role="listitem">
+              <div class="body-2">
+                <div class="button-group">
+                  <h3 class="title-3">Numpy</h3>
+                  <button class="button" type="button" aria-label="Удалить зависимость Numpy">
+                    <span class="button-2">удалить зависимость</span>
+                  </button>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+        <section aria-labelledby="add-dependency-heading">
+          <h2 id="add-dependency-heading" class="text-wrapper-3">Добавить зависимость</h2>
+          <div class="search" role="search">
+            <label for="search-input" class="visually-hidden">Поиск зависимостей</label>
+            <input
+              type="search"
+              id="search-input"
+              class="text-wrapper-2"
+              placeholder="Value"
+              aria-label="Поиск зависимостей"
+            />
+            <img class="img" src="https://c.animaapp.com/VVyY6BpD/img/search-2.svg" alt="" role="presentation" />
+          </div>
+          <div class="select-field-2">
+            <label for="packages-filter" class="label-2">Пакеты</label>
+            <select class="select" id="packages-filter" name="packages" aria-label="Фильтр по пакетам">
+              <option value="any" selected>any</option>
+            </select>
+          </div>
+          <div class="select-field">
+            <label for="libraries-filter" class="label-2">Библиотеки</label>
+            <select class="select" id="libraries-filter" name="libraries" aria-label="Фильтр по библиотекам">
+              <option value="any" selected>any</option>
+            </select>
+          </div>
+          <aside class="card-grid-content" aria-label="Доступные зависимости">
+            <div class="text-content-heading">
+              <div class="subheading"></div>
+            </div>
+            <div class="cards" role="list">
+              <article class="card" role="listitem">
+                <div class="body">
+                  <div class="div">
+                    <h3 class="text-wrapper">Numpy</h3>
+                    <p class="body-text-for">python</p>
+                  </div>
+                </div>
+              </article>
+              <article class="card" role="listitem">
+                <div class="body">
+                  <div class="div">
+                    <h3 class="text-wrapper">OpenCV python (precompiled RVV drivers)</h3>
+                    <p class="body-text-for">python</p>
+                  </div>
+                </div>
+              </article>
+              <article class="card" role="listitem">
+                <div class="body">
+                  <div class="div">
+                    <h3 class="text-wrapper">WiringPy</h3>
+                    <p class="body-text-for">python</p>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </aside>
+        </section>
+        <button class="button-3" type="submit" aria-label="Заказать образ">
+          <span class="button-4">Заказать образ</span>
+        </button>
+      </main>
+    </div>
+  </body>
+</html>

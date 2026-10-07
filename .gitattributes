@@ -1,0 +1,4 @@
+# Скрипты запускаются в Linux/WSL и Docker — всегда LF, независимо от core.autocrlf.
+*.sh      text eol=lf
+*.bash    text eol=lf
+Dockerfile*  text eol=lf
